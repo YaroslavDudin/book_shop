@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
+bookstore.db
 # Distribution / packaging
 .Python
 build/
