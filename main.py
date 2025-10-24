@@ -550,19 +550,15 @@ class DatabaseManager:
         conn.close()
         return order_id
     
-    def delete_order(self, order_id):
-        """Удаляет заказ"""
+    def deleteorder(self, order_id):
         conn = self.get_connection()
         cursor = conn.cursor()
-        
-        # Сначала удаляем позиции заказа
-        cursor.execute('DELETE FROM order_items WHERE order_id = ?', (order_id,))
-        
-        # Затем удаляем сам заказ
-        cursor.execute('DELETE FROM orders WHERE id = ?', (order_id,))
-        
+        cursor.execute("DELETE FROM order_items WHERE order_id = ?", (order_id,))
+        cursor.execute("DELETE FROM orders WHERE id = ?", (order_id,))
         conn.commit()
         conn.close()
+
+
     
     def get_order_by_id(self, order_id):
         """Получает заказ по ID"""
@@ -1413,6 +1409,25 @@ class OrdersWidget(QWidget):
             save_button.clicked.connect(lambda: self.save_order_changes(order_id, dialog))
             button_layout.addWidget(save_button)
         
+        if self.user_role in ("admin", "manager"):
+            delete_button = QPushButton("Удалить заказ")
+            delete_button.setStyleSheet(
+        "background-color: #FF6347; color: white; padding: 8px 16px; border-radius: 4px;"
+    )
+        def delete_order(order_id):
+            reply = QMessageBox.question(
+                self, 'Подтверждение удаления',
+                "Вы действительно хотите удалить этот заказ?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                self.db_manager.deleteorder(order_id)
+                QMessageBox.information(self, "Удалено", "Заказ успешно удален")
+                dialog.accept()
+                self.load_orders()
+                
+        delete_button.clicked.connect(lambda checked=False, oid=order_id: delete_order(oid))
+        button_layout.addWidget(delete_button)
         close_button = QPushButton('Закрыть')
         close_button.setStyleSheet("""
             QPushButton {
